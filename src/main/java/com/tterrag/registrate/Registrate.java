@@ -11,9 +11,7 @@ public class Registrate extends AbstractRegistrate<Registrate> {
      * @return The {@link Registrate} instance
      */
     public static Registrate create(String modid) {
-        var ret = new Registrate(modid);
-        ret.registerEventListeners(ret.getModEventBus());
-        return ret;
+        return new Registrate(modid);
     }
 
     protected Registrate(String modid) {

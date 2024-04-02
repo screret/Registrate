@@ -198,7 +198,7 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
      */
     public ItemBuilder<T, P> color(NonNullSupplier<Supplier<ItemColor>> colorHandler) {
         if (this.colorHandler == null) {
-            if(FMLEnvironment.dist == Dist.CLIENT){
+            if (FMLEnvironment.dist == Dist.CLIENT) {
                 registerItemColor();
             }
         }

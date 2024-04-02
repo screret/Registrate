@@ -33,8 +33,8 @@ public class FluidEntry<T extends BaseFlowingFluid> extends RegistryEntry<Fluid,
     }
 
     @SuppressWarnings("unchecked")
-    public <S extends BaseFlowingFluid> S getSource() {
-        return (S) get().getSource();
+    public <S extends BaseFlowingFluid> S getFlowing() {
+        return (S) get().getFlowing();
     }
 
     public FluidType getType() {

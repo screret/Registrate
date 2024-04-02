@@ -1,15 +1,5 @@
 package com.tterrag.registrate.builders;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
-import java.util.function.ToIntFunction;
-
-import javax.annotation.Nullable;
-
 import com.google.common.annotations.Beta;
 import com.google.common.base.Preconditions;
 import com.tterrag.registrate.AbstractRegistrate;
@@ -19,11 +9,7 @@ import com.tterrag.registrate.providers.RegistrateTagsProvider;
 import com.tterrag.registrate.util.OneTimeEventReceiver;
 import com.tterrag.registrate.util.entry.FluidEntry;
 import com.tterrag.registrate.util.entry.RegistryEntry;
-import com.tterrag.registrate.util.nullness.NonNullBiConsumer;
-import com.tterrag.registrate.util.nullness.NonNullBiFunction;
-import com.tterrag.registrate.util.nullness.NonNullConsumer;
-import com.tterrag.registrate.util.nullness.NonNullFunction;
-import com.tterrag.registrate.util.nullness.NonNullSupplier;
+import com.tterrag.registrate.util.nullness.*;
 
 import net.minecraft.Util;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
@@ -38,19 +24,25 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
-import net.neoforged.neoforge.common.util.Lazy;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 
-public class FluidBuilder<T extends BaseFlowingFluid, P> extends AbstractBuilder<Fluid, T, P, FluidBuilder<T, P>> {
+import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
+public class FluidBuilder<TSource extends BaseFlowingFluid, TFlowing extends BaseFlowingFluid, P> extends AbstractBuilder<Fluid, TSource, P, FluidBuilder<TSource, TFlowing, P>> {
 
     @FunctionalInterface
     public interface FluidTypeFactory {
@@ -75,10 +67,10 @@ public class FluidBuilder<T extends BaseFlowingFluid, P> extends AbstractBuilder
      * @param flowingTexture
      *            The texture to use for flowing fluids
      * @return A new {@link FluidBuilder} with reasonable default data generators.
-     * @see #create(AbstractRegistrate, Object, String, BuilderCallback, ResourceLocation, ResourceLocation, FluidTypeFactory, NonNullFunction)
+     * @see #create(AbstractRegistrate, Object, String, BuilderCallback, ResourceLocation, ResourceLocation, FluidTypeFactory, NonNullFunction, NonNullFunction)
      */
-    public static <P> FluidBuilder<BaseFlowingFluid.Flowing, P> create(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, ResourceLocation stillTexture, ResourceLocation flowingTexture) {
-        return create(owner, parent, name, callback, stillTexture, flowingTexture, FluidBuilder::defaultFluidType, BaseFlowingFluid.Flowing::new);
+    public static <P> FluidBuilder<BaseFlowingFluid.Source, BaseFlowingFluid.Flowing, P> create(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, ResourceLocation stillTexture, ResourceLocation flowingTexture) {
+        return create(owner, parent, name, callback, stillTexture, flowingTexture, FluidBuilder::defaultFluidType, BaseFlowingFluid.Source::new, BaseFlowingFluid.Flowing::new);
     }
 
     /**
@@ -101,10 +93,10 @@ public class FluidBuilder<T extends BaseFlowingFluid, P> extends AbstractBuilder
      * @param flowingTexture
      *            The texture to use for flowing fluids
      * @return A new {@link FluidBuilder} with reasonable default data generators.
-     * @see #create(AbstractRegistrate, Object, String, BuilderCallback, ResourceLocation, ResourceLocation, FluidTypeFactory, NonNullFunction)
+     * @see #create(AbstractRegistrate, Object, String, BuilderCallback, ResourceLocation, ResourceLocation, FluidTypeFactory, NonNullFunction, NonNullFunction)
      */
-    public static <P> FluidBuilder<BaseFlowingFluid.Flowing, P> create(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, ResourceLocation stillTexture, ResourceLocation flowingTexture, FluidTypeFactory typeFactory) {
-        return create(owner, parent, name, callback, stillTexture, flowingTexture, typeFactory, BaseFlowingFluid.Flowing::new);
+    public static <P> FluidBuilder<BaseFlowingFluid.Source, BaseFlowingFluid.Flowing, P> create(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, ResourceLocation stillTexture, ResourceLocation flowingTexture, FluidTypeFactory typeFactory) {
+        return create(owner, parent, name, callback, stillTexture, flowingTexture, typeFactory, BaseFlowingFluid.Source::new, BaseFlowingFluid.Flowing::new);
     }
 
     /**
@@ -127,17 +119,19 @@ public class FluidBuilder<T extends BaseFlowingFluid, P> extends AbstractBuilder
      * @param flowingTexture
      *            The texture to use for flowing fluids
      * @return A new {@link FluidBuilder} with reasonable default data generators.
-     * @see #create(AbstractRegistrate, Object, String, BuilderCallback, ResourceLocation, ResourceLocation, FluidTypeFactory, NonNullFunction)
+     * @see #create(AbstractRegistrate, Object, String, BuilderCallback, ResourceLocation, ResourceLocation, FluidTypeFactory, NonNullFunction, NonNullFunction)
      */
-    public static <P> FluidBuilder<BaseFlowingFluid.Flowing, P> create(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, ResourceLocation stillTexture, ResourceLocation flowingTexture, NonNullSupplier<FluidType> fluidType) {
-        return create(owner, parent, name, callback, stillTexture, flowingTexture, fluidType, BaseFlowingFluid.Flowing::new);
+    public static <P> FluidBuilder<BaseFlowingFluid.Source, BaseFlowingFluid.Flowing, P> create(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, ResourceLocation stillTexture, ResourceLocation flowingTexture, NonNullSupplier<FluidType> fluidType) {
+        return create(owner, parent, name, callback, stillTexture, flowingTexture, fluidType, BaseFlowingFluid.Source::new, BaseFlowingFluid.Flowing::new);
     }
 
     /**
      * Create a new {@link FluidBuilder} and configure data. The created builder will use a default ({@link FluidType}) and fluid class ({@link BaseFlowingFluid.Flowing}).
      *
-     * @param <T>
-     *            The type of the builder
+     * @param <TSource>>
+     *            The source fluid type
+     * @param <TFlowing>
+     *            The flowing fluid type
      * @param <P>
      *            Parent object type
      * @param owner
@@ -152,13 +146,15 @@ public class FluidBuilder<T extends BaseFlowingFluid, P> extends AbstractBuilder
      *            The texture to use for still fluids
      * @param flowingTexture
      *            The texture to use for flowing fluids
-     * @param fluidFactory
-     *            A factory that creates the flowing fluid
+     * @param sourceFactory
+     *            A factory that creates the source fluid
+     * @param flowingFactory
+     *            A factory that creates the source fluid
      * @return A new {@link FluidBuilder} with reasonable default data generators.
      */
-    public static <T extends BaseFlowingFluid, P> FluidBuilder<T, P> create(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, ResourceLocation stillTexture, ResourceLocation flowingTexture,
-        NonNullFunction<BaseFlowingFluid.Properties, T> fluidFactory) {
-        return create(owner, parent, name, callback, stillTexture, flowingTexture, FluidBuilder::defaultFluidType, fluidFactory);
+    public static <TSource extends BaseFlowingFluid, TFlowing extends BaseFlowingFluid, P> FluidBuilder<TSource, TFlowing, P> create(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, ResourceLocation stillTexture, ResourceLocation flowingTexture,
+                                                                                                                                       NonNullFunction<BaseFlowingFluid.Properties, TSource> sourceFactory, NonNullFunction<BaseFlowingFluid.Properties, TFlowing> flowingFactory) {
+        return create(owner, parent, name, callback, stillTexture, flowingTexture, FluidBuilder::defaultFluidType, sourceFactory, flowingFactory);
     }
 
     /**
@@ -167,13 +163,14 @@ public class FluidBuilder<T extends BaseFlowingFluid, P> extends AbstractBuilder
      * The fluid will be assigned the following data:
      * <ul>
      * <li>The default translation (via {@link #defaultLang()})</li>
-     * <li>A default {@link BaseFlowingFluid.Source source fluid} (via {@link #defaultSource})</li>
      * <li>A default block for the fluid, with its own default blockstate and model that configure the particle texture (via {@link #defaultBlock()})</li>
      * <li>A default bucket item, that uses a simple generated item model with a texture of the same name as this fluid (via {@link #defaultBucket()})</li>
      * </ul>
      *
-     * @param <T>
-     *            The type of the builder
+     * @param <TSource>>
+     *            The source fluid type
+     * @param <TFlowing>
+     *            The flowing fluid type
      * @param <P>
      *            Parent object type
      * @param owner
@@ -190,14 +187,16 @@ public class FluidBuilder<T extends BaseFlowingFluid, P> extends AbstractBuilder
      *            The texture to use for flowing fluids
      * @param typeFactory
      *            A factory that creates the fluid type
-     * @param fluidFactory
-     *            A factory that creates the flowing fluid
+     * @param sourceFactory
+     *            A factory that creates the source fluid
+     * @param flowingFactory
+     *            A factory that creates the source fluid
      * @return A new {@link FluidBuilder} with reasonable default data generators.
      */
-    public static <T extends BaseFlowingFluid, P> FluidBuilder<T, P> create(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, ResourceLocation stillTexture, ResourceLocation flowingTexture,
-        FluidTypeFactory typeFactory, NonNullFunction<BaseFlowingFluid.Properties, T> fluidFactory) {
-        FluidBuilder<T, P> ret = new FluidBuilder<>(owner, parent, name, callback, stillTexture, flowingTexture, typeFactory, fluidFactory)
-            .defaultLang().defaultSource().defaultBlock().defaultBucket();
+    public static <TSource extends BaseFlowingFluid, TFlowing extends BaseFlowingFluid, P> FluidBuilder<TSource, TFlowing, P> create(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, ResourceLocation stillTexture, ResourceLocation flowingTexture,
+                                                                                                                                       FluidTypeFactory typeFactory, NonNullFunction<BaseFlowingFluid.Properties, TSource> sourceFactory, NonNullFunction<BaseFlowingFluid.Properties, TFlowing> flowingFactory) {
+        FluidBuilder<TSource, TFlowing, P> ret = new FluidBuilder<>(owner, parent, name, callback, stillTexture, flowingTexture, typeFactory, sourceFactory, flowingFactory)
+                .defaultLang().defaultBlock().defaultBucket();
         return ret;
     }
 
@@ -207,13 +206,14 @@ public class FluidBuilder<T extends BaseFlowingFluid, P> extends AbstractBuilder
      * The fluid will be assigned the following data:
      * <ul>
      * <li>The default translation (via {@link #defaultLang()})</li>
-     * <li>A default {@link BaseFlowingFluid.Source source fluid} (via {@link #defaultSource})</li>
      * <li>A default block for the fluid, with its own default blockstate and model that configure the particle texture (via {@link #defaultBlock()})</li>
      * <li>A default bucket item, that uses a simple generated item model with a texture of the same name as this fluid (via {@link #defaultBucket()})</li>
      * </ul>
      *
-     * @param <T>
-     *            The type of the builder
+     * @param <TSource>>
+     *            The source fluid type
+     * @param <TFlowing>
+     *            The flowing fluid type
      * @param <P>
      *            Parent object type
      * @param owner
@@ -230,62 +230,70 @@ public class FluidBuilder<T extends BaseFlowingFluid, P> extends AbstractBuilder
      *            The texture to use for flowing fluids
      * @param fluidType
      *            An existing and registered fluid type
-     * @param fluidFactory
-     *            A factory that creates the flowing fluid
+     * @param sourceFactory
+     *            A factory that creates the source fluid
+     * @param flowingFactory
+     *            A factory that creates the source fluid
      * @return A new {@link FluidBuilder} with reasonable default data generators.
      */
-    public static <T extends BaseFlowingFluid, P> FluidBuilder<T, P> create(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, ResourceLocation stillTexture, ResourceLocation flowingTexture,
-        NonNullSupplier<FluidType> fluidType, NonNullFunction<BaseFlowingFluid.Properties, T> fluidFactory) {
-        FluidBuilder<T, P> ret = new FluidBuilder<>(owner, parent, name, callback, stillTexture, flowingTexture, fluidType, fluidFactory)
-                .defaultLang().defaultSource().defaultBlock().defaultBucket();
+    public static <TSource extends BaseFlowingFluid, TFlowing extends BaseFlowingFluid, P> FluidBuilder<TSource, TFlowing, P> create(
+            AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, ResourceLocation stillTexture, ResourceLocation flowingTexture, NonNullSupplier<FluidType> fluidType,
+            NonNullFunction<BaseFlowingFluid.Properties, TSource> sourceFactory, NonNullFunction<BaseFlowingFluid.Properties, TFlowing> flowingFactory) {
+        FluidBuilder<TSource, TFlowing, P> ret = new FluidBuilder<>(owner, parent, name, callback, stillTexture, flowingTexture, fluidType, sourceFactory, flowingFactory)
+                .defaultLang().defaultBlock().defaultBucket();
         return ret;
     }
 
-    private final String sourceName, bucketName;
+    private final String flowingName, bucketName;
 
     private final ResourceLocation stillTexture, flowingTexture;
-    private final NonNullFunction<BaseFlowingFluid.Properties, T> fluidFactory;
+    private final NonNullFunction<BaseFlowingFluid.Properties, ? extends TSource> sourceFactory;
+    private final NonNullFunction<BaseFlowingFluid.Properties, ? extends TFlowing> flowingFactory;
 
     @Nullable
     private final NonNullSupplier<FluidType> fluidType;
 
     @Nullable
-    private Boolean defaultSource, defaultBlock, defaultBucket;
+    private Boolean defaultBlock, defaultBucket;
 
     private NonNullConsumer<FluidType.Properties> typeProperties = $ -> {};
 
     private NonNullConsumer<BaseFlowingFluid.Properties> fluidProperties;
 
-    private @Nullable Supplier<RenderType> layer = null;
+    private @Nullable Supplier<Supplier<RenderType>> layer = null;
 
     private boolean registerType;
 
-    @Nullable
-    private NonNullSupplier<? extends BaseFlowingFluid> source;
+    private NonNullSupplier<TFlowing> flowingFluid;
     private final List<TagKey<Fluid>> tags = new ArrayList<>();
 
-    public FluidBuilder(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, ResourceLocation stillTexture, ResourceLocation flowingTexture, FluidTypeFactory typeFactory, NonNullFunction<BaseFlowingFluid.Properties, T> fluidFactory) {
-        super(owner, parent, "flowing_" + name, callback, Registries.FLUID);
-        this.sourceName = name;
+    public FluidBuilder(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, ResourceLocation stillTexture, ResourceLocation flowingTexture, FluidTypeFactory typeFactory,
+                        NonNullFunction<BaseFlowingFluid.Properties, ? extends TSource> sourceFactory, NonNullFunction<BaseFlowingFluid.Properties, ? extends TFlowing> flowingFactory) {
+        super(owner, parent, name, callback, Registries.FLUID);
+        this.flowingName = "flowing_" + name;
         this.bucketName = name + "_bucket";
         this.stillTexture = stillTexture;
         this.flowingTexture = flowingTexture;
-        this.fluidFactory = fluidFactory;
+        this.sourceFactory = sourceFactory;
+        this.flowingFactory = flowingFactory;
+        this.flowingFluid = NonNullSupplier.lazy(() -> this.flowingFactory.apply(makeProperties()));
         this.fluidType = NonNullSupplier.lazy(() -> typeFactory.create(makeTypeProperties(), this.stillTexture, this.flowingTexture));
         this.registerType = true;
 
         String bucketName = this.bucketName;
         this.fluidProperties = p -> p.bucket(() -> owner.get(bucketName, Registries.ITEM).get())
-            .block(() -> owner.<Block, LiquidBlock>get(name, Registries.BLOCK).get());
+                .block(() -> owner.<Block, LiquidBlock>get(name, Registries.BLOCK).get());
     }
 
-    public FluidBuilder(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, ResourceLocation stillTexture, ResourceLocation flowingTexture, NonNullSupplier<FluidType> fluidType, NonNullFunction<BaseFlowingFluid.Properties, T> fluidFactory) {
-        super(owner, parent, "flowing_" + name, callback, Registries.FLUID);
-        this.sourceName = name;
+    public FluidBuilder(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, ResourceLocation stillTexture, ResourceLocation flowingTexture, NonNullSupplier<FluidType> fluidType,
+                        NonNullFunction<BaseFlowingFluid.Properties, TSource> sourceFactory, NonNullFunction<BaseFlowingFluid.Properties, TFlowing> flowingFactory) {
+        super(owner, parent, name, callback, Registries.FLUID);
+        this.flowingName = "flowing_" + name;
         this.bucketName = name + "_bucket";
         this.stillTexture = stillTexture;
         this.flowingTexture = flowingTexture;
-        this.fluidFactory = fluidFactory;
+        this.sourceFactory = sourceFactory;
+        this.flowingFactory = flowingFactory;
         this.fluidType = fluidType;
         this.registerType = false; // Don't register if we have a fluid from outside.
 
@@ -302,7 +310,7 @@ public class FluidBuilder<T extends BaseFlowingFluid, P> extends AbstractBuilder
      *            The action to perform on the attributes
      * @return this {@link FluidBuilder}
      */
-    public FluidBuilder<T, P> properties(NonNullConsumer<FluidType.Properties> cons) {
+    public FluidBuilder<TSource, TFlowing, P> properties(NonNullConsumer<FluidType.Properties> cons) {
         typeProperties = typeProperties.andThen(cons);
         return this;
     }
@@ -315,7 +323,7 @@ public class FluidBuilder<T extends BaseFlowingFluid, P> extends AbstractBuilder
      *            The action to perform on the attributes
      * @return this {@link FluidBuilder}
      */
-    public FluidBuilder<T, P> fluidProperties(NonNullConsumer<BaseFlowingFluid.Properties> cons) {
+    public FluidBuilder<TSource, TFlowing, P> fluidProperties(NonNullConsumer<BaseFlowingFluid.Properties> cons) {
         fluidProperties = fluidProperties.andThen(cons);
         return this;
     }
@@ -326,8 +334,8 @@ public class FluidBuilder<T extends BaseFlowingFluid, P> extends AbstractBuilder
      *
      * @return this {@link FluidBuilder}
      */
-    public FluidBuilder<T, P> defaultLang() {
-        return lang(f -> f.getFluidType().getDescriptionId(), RegistrateLangProvider.toEnglishName(sourceName));
+    public FluidBuilder<TSource, TFlowing, P> defaultLang() {
+        return lang(f -> f.getFluidType().getDescriptionId(), RegistrateLangProvider.toEnglishName(getName()));
     }
 
     /**
@@ -337,14 +345,13 @@ public class FluidBuilder<T extends BaseFlowingFluid, P> extends AbstractBuilder
      *            A localized English name
      * @return this {@link FluidBuilder}
      */
-    public FluidBuilder<T, P> lang(String name) {
+    public FluidBuilder<TSource, TFlowing, P> lang(String name) {
         return lang(f -> f.getFluidType().getDescriptionId(), name);
     }
 
-    @SuppressWarnings("deprecation")
-    public FluidBuilder<T, P> renderType(Supplier<RenderType> layer) {
-        if(FMLEnvironment.dist == Dist.CLIENT){
-            Preconditions.checkArgument(RenderType.chunkBufferLayers().contains(layer.get()), "Invalid render type: " + layer);
+    public FluidBuilder<TSource, TFlowing, P> renderType(Supplier<Supplier<RenderType>> layer) {
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            Preconditions.checkArgument(RenderType.chunkBufferLayers().contains(layer.get().get()), "Invalid render type: " + layer);
         }
 
         if (this.layer == null) {
@@ -354,46 +361,16 @@ public class FluidBuilder<T extends BaseFlowingFluid, P> extends AbstractBuilder
         return this;
     }
 
-    @SuppressWarnings("deprecation")
-    protected void registerRenderType(T entry) {
-        if(FMLEnvironment.dist == Dist.CLIENT){
+    protected void registerRenderType(TSource entry) {
+        if (FMLEnvironment.dist == Dist.CLIENT) {
             OneTimeEventReceiver.addModListener(getOwner(), FMLClientSetupEvent.class, $ -> {
                 if (this.layer != null) {
-                    RenderType layer = this.layer.get();
+                    RenderType layer = this.layer.get().get();
                     ItemBlockRenderTypes.setRenderLayer(entry, layer);
-                    ItemBlockRenderTypes.setRenderLayer(getSource(), layer);
+                    ItemBlockRenderTypes.setRenderLayer(flowingFluid.get(), layer);
                 }
             });
         }
-    }
-
-    /**
-     * Create a standard {@link BaseFlowingFluid.Source} for this fluid which will be built and registered along with this fluid.
-     *
-     * @return this {@link FluidBuilder}
-     * @see #source(NonNullFunction)
-     * @throws IllegalStateException
-     *             If {@link #source(NonNullFunction)} has been called before this method
-     */
-    public FluidBuilder<T, P> defaultSource() {
-        if (this.defaultSource != null) {
-            throw new IllegalStateException("Cannot set a default source after a custom source has been created");
-        }
-        this.defaultSource = true;
-        return this;
-    }
-
-    /**
-     * Create a {@link BaseFlowingFluid} for this fluid, which is created by the given factory, and which will be built and registered along with this fluid.
-     *
-     * @param factory
-     *            A factory for the fluid, which accepts the properties and returns a new fluid
-     * @return this {@link FluidBuilder}
-     */
-    public FluidBuilder<T, P> source(NonNullFunction<BaseFlowingFluid.Properties, ? extends BaseFlowingFluid> factory) {
-        this.defaultSource = false;
-        this.source = NonNullSupplier.lazy(() -> factory.apply(makeProperties()));
-        return this;
     }
 
     /**
@@ -404,7 +381,7 @@ public class FluidBuilder<T extends BaseFlowingFluid, P> extends AbstractBuilder
      * @throws IllegalStateException
      *             If {@link #block()} or {@link #block(NonNullBiFunction)} has been called before this method
      */
-    public FluidBuilder<T, P> defaultBlock() {
+    public FluidBuilder<TSource, TFlowing, P> defaultBlock() {
         if (this.defaultBlock != null) {
             throw new IllegalStateException("Cannot set a default block after a custom block has been created");
         }
@@ -417,7 +394,7 @@ public class FluidBuilder<T extends BaseFlowingFluid, P> extends AbstractBuilder
      *
      * @return the {@link BlockBuilder} for the {@link LiquidBlock}
      */
-    public BlockBuilder<LiquidBlock, FluidBuilder<T, P>> block() {
+    public BlockBuilder<LiquidBlock, FluidBuilder<TSource, TFlowing, P>> block() {
         return block(LiquidBlock::new);
     }
 
@@ -430,26 +407,27 @@ public class FluidBuilder<T extends BaseFlowingFluid, P> extends AbstractBuilder
      *            A factory for the block, which accepts the block object and properties and returns a new block
      * @return the {@link BlockBuilder} for the {@link LiquidBlock}
      */
-    public <B extends LiquidBlock> BlockBuilder<B, FluidBuilder<T, P>> block(NonNullBiFunction<NonNullSupplier<? extends T>, BlockBehaviour.Properties, ? extends B> factory) {
+    public <B extends LiquidBlock> BlockBuilder<B, FluidBuilder<TSource, TFlowing, P>> block(NonNullBiFunction<NonNullSupplier<? extends TSource>, BlockBehaviour.Properties, ? extends B> factory) {
         if (this.defaultBlock == Boolean.FALSE) {
             throw new IllegalStateException("Only one call to block/noBlock per builder allowed");
         }
         this.defaultBlock = false;
-        final NonNullSupplier<T> supplier = asSupplier();
-        final var lightLevel = Lazy.of(() -> fluidType.get().getLightLevel());
-        final ToIntFunction<BlockState> lightLevelInt = $ -> lightLevel.get();
-        return getOwner().<B, FluidBuilder<T, P>>block(this, sourceName, p -> factory.apply(supplier, p))
-            .properties(p -> BlockBehaviour.Properties.ofFullCopy(Blocks.WATER).noLootTable())
-            .properties(p -> p.lightLevel(lightLevelInt))
-            .blockstate((ctx, prov) -> prov.simpleBlock(ctx.getEntry(), prov.models().getBuilder(sourceName)
-                .texture("particle", stillTexture)));
+        NonNullSupplier<TSource> supplier = asSupplier();
+        return getOwner().<B, FluidBuilder<TSource, TFlowing, P>>block(this, getName(), p -> factory.apply(supplier, p))
+                .properties(p -> BlockBehaviour.Properties.ofFullCopy(Blocks.WATER).noLootTable())
+                .properties(p -> p.lightLevel(blockState -> fluidType.get().getLightLevel()))
+                .blockstate((ctx, prov) -> prov.simpleBlock(ctx.getEntry(), prov.models().getBuilder(getName())
+                        .texture("particle", stillTexture)));
     }
 
     @Beta
-    public FluidBuilder<T, P> noBlock() {
+    public FluidBuilder<TSource, TFlowing, P> noBlock() {
         if (this.defaultBlock == Boolean.FALSE) {
             throw new IllegalStateException("Only one call to block/noBlock per builder allowed");
         }
+
+        // Remove block lookup
+        this.fluidProperties = p -> p.block(null);
         this.defaultBlock = false;
         return this;
     }
@@ -462,7 +440,7 @@ public class FluidBuilder<T extends BaseFlowingFluid, P> extends AbstractBuilder
      * @throws IllegalStateException
      *             If {@link #bucket()} or {@link #bucket(NonNullBiFunction)} has been called before this method
      */
-    public FluidBuilder<T, P> defaultBucket() {
+    public FluidBuilder<TSource, TFlowing, P> defaultBucket() {
         if (this.defaultBucket != null) {
             throw new IllegalStateException("Cannot set a default bucket after a custom bucket has been created");
         }
@@ -475,7 +453,7 @@ public class FluidBuilder<T extends BaseFlowingFluid, P> extends AbstractBuilder
      *
      * @return the {@link ItemBuilder} for the {@link BucketItem}
      */
-    public ItemBuilder<BucketItem, FluidBuilder<T, P>> bucket() {
+    public ItemBuilder<BucketItem, FluidBuilder<TSource, TFlowing, P>> bucket() {
         return bucket(BucketItem::new);
     }
 
@@ -488,26 +466,25 @@ public class FluidBuilder<T extends BaseFlowingFluid, P> extends AbstractBuilder
      *            A factory for the bucket item, which accepts the fluid object supplier and properties and returns a new item
      * @return the {@link ItemBuilder} for the {@link BucketItem}
      */
-    public <I extends BucketItem> ItemBuilder<I, FluidBuilder<T, P>> bucket(NonNullBiFunction<Supplier<? extends BaseFlowingFluid>, Item.Properties, ? extends I> factory) {
+    public <I extends BucketItem> ItemBuilder<I, FluidBuilder<TSource, TFlowing, P>> bucket(NonNullBiFunction<Supplier<? extends BaseFlowingFluid>, Item.Properties, ? extends I> factory) {
         if (this.defaultBucket == Boolean.FALSE) {
             throw new IllegalStateException("Only one call to bucket/noBucket per builder allowed");
         }
         this.defaultBucket = false;
-        NonNullSupplier<? extends BaseFlowingFluid> source = this.source;
-        // TODO: Can we find a way to circumvent this limitation?
-        if (source == null) {
-            throw new IllegalStateException("Cannot create a bucket before creating a source block");
-        }
-        return getOwner().<I, FluidBuilder<T, P>>item(this, bucketName, p -> factory.apply(source::get, p))
-            .properties(p -> p.craftRemainder(Items.BUCKET).stacksTo(1))
-            .model((ctx, prov) -> prov.generated(ctx::getEntry, new ResourceLocation(getOwner().getModid(), "item/" + bucketName)));
+
+        return getOwner().<I, FluidBuilder<TSource, TFlowing, P>>item(this, bucketName, p -> factory.apply(() -> get().get(), p))
+                .properties(p -> p.craftRemainder(Items.BUCKET).stacksTo(1))
+                .model((ctx, prov) -> prov.generated(ctx::getEntry, new ResourceLocation(getOwner().getModid(), "item/" + bucketName)));
     }
 
     @Beta
-    public FluidBuilder<T, P> noBucket() {
+    public FluidBuilder<TSource, TFlowing, P> noBucket() {
         if (this.defaultBucket == Boolean.FALSE) {
             throw new IllegalStateException("Only one call to bucket/noBucket per builder allowed");
         }
+
+        // Disable bucket lookup
+        fluidProperties = p -> p.bucket(null);
         this.defaultBucket = false;
         return this;
     }
@@ -520,11 +497,11 @@ public class FluidBuilder<T extends BaseFlowingFluid, P> extends AbstractBuilder
      * @return this {@link FluidBuilder}
      */
     @SafeVarargs
-    public final FluidBuilder<T, P> tag(TagKey<Fluid>... tags) {
-        FluidBuilder<T, P> ret = this.tag(ProviderType.FLUID_TAGS, tags);
+    public final FluidBuilder<TSource, TFlowing, P> tag(TagKey<Fluid>... tags) {
+        FluidBuilder<TSource, TFlowing, P> ret = this.tag(ProviderType.FLUID_TAGS, tags);
         if (this.tags.isEmpty()) {
-            ret.getOwner().<RegistrateTagsProvider<Fluid>, Fluid>setDataGenerator(ret.sourceName, getRegistryKey(), ProviderType.FLUID_TAGS,
-                prov -> this.tags.stream().map(prov::addTag).forEach(p -> p.add(getSource().builtInRegistryHolder().key())));
+            ret.getOwner().<RegistrateTagsProvider<Fluid>, Fluid>setDataGenerator(ret.flowingName, getRegistryKey(), ProviderType.FLUID_TAGS,
+                    prov -> this.tags.stream().map(prov::addTag).forEach(p -> p.add(ret.flowingFluid.get().builtInRegistryHolder().key())));
         }
         this.tags.addAll(Arrays.asList(tags));
         return ret;
@@ -538,27 +515,20 @@ public class FluidBuilder<T extends BaseFlowingFluid, P> extends AbstractBuilder
      * @return this {@link FluidBuilder}
      */
     @SafeVarargs
-    public final FluidBuilder<T, P> removeTag(TagKey<Fluid>... tags) {
+    public final FluidBuilder<TSource, TFlowing, P> removeTag(TagKey<Fluid>... tags) {
         this.tags.removeAll(Arrays.asList(tags));
         return this.removeTag(ProviderType.FLUID_TAGS, tags);
     }
 
-    private BaseFlowingFluid getSource() {
-        NonNullSupplier<? extends BaseFlowingFluid> source = this.source;
-        Preconditions.checkNotNull(source, "Fluid has no source block: " + sourceName);
-        return source.get();
-    }
-
     private BaseFlowingFluid.Properties makeProperties() {
-        NonNullSupplier<? extends BaseFlowingFluid> source = this.source;
-        BaseFlowingFluid.Properties ret = new BaseFlowingFluid.Properties(fluidType, source == null ? null : source::get, asSupplier());
+        BaseFlowingFluid.Properties ret = new BaseFlowingFluid.Properties(fluidType, asSupplier(), flowingFluid);
         fluidProperties.accept(ret);
         return ret;
     }
 
     private FluidType.Properties makeTypeProperties() {
         FluidType.Properties properties = FluidType.Properties.create();
-        Optional<RegistryEntry<Block, Block>> optionalBlock = getOwner().getOptional(sourceName, Registries.BLOCK);
+        Optional<RegistryEntry<Block, Block>> block = getOwner().getOptional(getName(), Registries.BLOCK);
         this.typeProperties.accept(properties);
 
         // Force the translation key after the user callback runs
@@ -566,19 +536,19 @@ public class FluidBuilder<T extends BaseFlowingFluid, P> extends AbstractBuilder
         // and if it was possible to undo this change, it might result in the user translation getting
         // silently lost, as there's no good way to check whether the translation key was changed.
         // TODO improve this?
-        if (optionalBlock.isPresent()) {
-            properties.descriptionId(optionalBlock.get().get().getDescriptionId());
+        if (block.isPresent() && block.get().isBound()) {
+            properties.descriptionId(block.get().get().getDescriptionId());
             setData(ProviderType.LANG, NonNullBiConsumer.noop());
         } else {
-            properties.descriptionId(Util.makeDescriptionId("fluid", new ResourceLocation(getOwner().getModid(), sourceName)));
+            properties.descriptionId(Util.makeDescriptionId("fluid", new ResourceLocation(getOwner().getModid(), getName())));
         }
 
         return properties;
     }
 
     @Override
-    protected T createEntry() {
-        return fluidFactory.apply(makeProperties());
+    protected TSource createEntry() {
+        return sourceFactory.apply(makeProperties());
     }
 
     /**
@@ -588,20 +558,17 @@ public class FluidBuilder<T extends BaseFlowingFluid, P> extends AbstractBuilder
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
-    public FluidEntry<T> register() {
+    public FluidEntry<TSource> register() {
         // Check the fluid has a type.
         if (this.fluidType != null) {
             // Register the type.
             if (this.registerType) {
-                getOwner().simple(this, this.sourceName, NeoForgeRegistries.Keys.FLUID_TYPES, this.fluidType);
+                getOwner().simple(this, getName(), NeoForgeRegistries.Keys.FLUID_TYPES, this.fluidType);
             }
         } else {
             throw new IllegalStateException("Fluid must have a type: " + getName());
         }
 
-        if (defaultSource == Boolean.TRUE) {
-            source(BaseFlowingFluid.Source::new);
-        }
         if (defaultBlock == Boolean.TRUE) {
             block().register();
         }
@@ -609,18 +576,13 @@ public class FluidBuilder<T extends BaseFlowingFluid, P> extends AbstractBuilder
             bucket().register();
         }
 
-        NonNullSupplier<? extends BaseFlowingFluid> source = this.source;
-        if (source != null) {
-            getCallback().accept(sourceName, Registries.FLUID, (FluidBuilder) this, source::get);
-        } else {
-            throw new IllegalStateException("Fluid must have a source version: " + getName());
-        }
+        getCallback().accept(flowingName, Registries.FLUID, (FluidBuilder) this, flowingFluid);
 
-        return (FluidEntry<T>) super.register();
+        return (FluidEntry<TSource>) super.register();
     }
 
     @Override
-    protected RegistryEntry<Fluid, T> createEntryWrapper(DeferredHolder<Fluid, T> delegate) {
+    protected RegistryEntry<Fluid, TSource> createEntryWrapper(DeferredHolder<Fluid, TSource> delegate) {
         return new FluidEntry<>(getOwner(), delegate);
     }
 

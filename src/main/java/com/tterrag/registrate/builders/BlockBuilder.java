@@ -153,7 +153,7 @@ public class BlockBuilder<T extends Block, P> extends AbstractBuilder<Block, T, 
 
     @SuppressWarnings("deprecation")
     protected void registerLayers(T entry) {
-        if(FMLEnvironment.dist == Dist.CLIENT){
+        if (FMLEnvironment.dist == Dist.CLIENT) {
             OneTimeEventReceiver.addModListener(getOwner(), FMLClientSetupEvent.class, $ -> {
                 if (renderLayers.size() == 1) {
                     final RenderType layer = renderLayers.get(0).get().get();
@@ -260,7 +260,7 @@ public class BlockBuilder<T extends Block, P> extends AbstractBuilder<Block, T, 
     // TODO it might be worthwhile to abstract this more and add the capability to automatically copy to the item
     public BlockBuilder<T, P> color(NonNullSupplier<Supplier<BlockColor>> colorHandler) {
         if (this.colorHandler == null) {
-            if(FMLEnvironment.dist == Dist.CLIENT){
+            if (FMLEnvironment.dist == Dist.CLIENT) {
                registerBlockColor();
             }
         }

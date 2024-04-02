@@ -197,8 +197,7 @@ public class TestMod {
 
     private static class TestCustomRegistryEntry {}
 
-    private final Registrate registrate = Registrate
-            .create("testmod");
+    private final Registrate registrate = Registrate.create("testmod");
 
     private final RegistryEntry<CreativeModeTab ,CreativeModeTab> testcreativetab = registrate.object("test_creative_mode_tab")
             .defaultCreativeTab(tab -> tab.withLabelColor(0xFF00AA00))
@@ -281,7 +280,7 @@ public class TestMod {
             .blockEntity(TestDummyBlockEntity::new)
             .register();
 
-    private final FluidEntry<BaseFlowingFluid.Flowing> testfluid = registrate.object("testfluid")
+    private final FluidEntry<BaseFlowingFluid.Source> testfluid = registrate.object("testfluid")
             .fluid(new ResourceLocation("block/water_flow"), new ResourceLocation("block/lava_still"), (props, still, flow) -> new FluidType(props) {
                 // And now you can do custom behaviours.
                 @Override
@@ -300,7 +299,7 @@ public class TestMod {
                 }
             })
             .properties(p -> p.lightLevel(15).canConvertToSource(true))
-            .renderType(RenderType::translucent)
+            .renderType(() -> RenderType::translucent)
             .noBucket()
 //            .bucket()
 //                .model((ctx, prov) -> prov.withExistingParent(ctx.getName(), prov.mcLoc("item/water_bucket")))
@@ -450,6 +449,8 @@ public class TestMod {
                     Set.of("testmod")
             );
         }));
+
+        registrate.registerEventListeners(modEventBus);
 
         modEventBus.addListener(this::onCommonSetup);
         NeoForge.EVENT_BUS.addListener(this::afterServerStart);
