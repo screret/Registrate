@@ -106,6 +106,9 @@ jar {
     }
 }
 
+java {
+    withSourcesJar()
+}
 task sourceJar(type: Jar, dependsOn: classes) {
     archiveClassifier = 'sources'
     from sourceSets.main.delombokTask
