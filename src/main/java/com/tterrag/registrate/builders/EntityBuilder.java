@@ -14,6 +14,7 @@ import com.tterrag.registrate.util.nullness.NonNullConsumer;
 import com.tterrag.registrate.util.nullness.NonNullFunction;
 import com.tterrag.registrate.util.nullness.NonNullSupplier;
 
+import net.minecraft.client.color.block.BlockColor;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.core.registries.Registries;
@@ -29,8 +30,10 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.common.DeferredSpawnEggItem;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
+import net.neoforged.neoforge.event.entity.SpawnPlacementRegisterEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
 import javax.annotation.Nullable;
@@ -173,8 +176,7 @@ public class EntityBuilder<T extends Entity, P> extends AbstractBuilder<EntityTy
      * @throws IllegalStateException
      *             When called more than once
      */
-    @SuppressWarnings("unchecked")
-    public EntityBuilder<T, P> spawnPlacement(SpawnPlacements.Type type, Heightmap.Types heightmap, SpawnPredicate<T> predicate) {
+    public EntityBuilder<T, P> spawnPlacement(SpawnPlacementType type, Heightmap.Types heightmap, SpawnPredicate<T> predicate, SpawnPlacementRegisterEvent.Operation operation) {
         if (spawnConfigured) {
             throw new IllegalStateException("Cannot configure spawn placement more than once");
         }
@@ -189,7 +191,9 @@ public class EntityBuilder<T extends Entity, P> extends AbstractBuilder<EntityTy
                 throw new RuntimeException("Failed to type check entity " + t.getRegistryName() + " when registering spawn placement", e);
             }
             */
-            SpawnPlacements.register((EntityType<Mob>) t, type, heightmap, (SpawnPredicate<Mob>) predicate);
+            OneTimeEventReceiver.addModListener(getOwner(), SpawnPlacementRegisterEvent.class, e -> {
+                e.register(t, type, heightmap, predicate, operation);
+            });
         });
         return this;
     }

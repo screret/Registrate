@@ -37,19 +37,13 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.flag.FeatureFlagSet;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.crafting.AbstractCookingRecipe;
-import net.minecraft.world.item.crafting.BlastingRecipe;
-import net.minecraft.world.item.crafting.CampfireCookingRecipe;
-import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.item.crafting.RecipeSerializer;
-import net.minecraft.world.item.crafting.SmeltingRecipe;
-import net.minecraft.world.item.crafting.SmokingRecipe;
+import net.minecraft.world.item.crafting.*;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.fml.LogicalSide;
 import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.common.conditions.ICondition;
+import net.neoforged.neoforge.registries.NeoForgeRegistries;
 
 public class RegistrateRecipeProvider extends RecipeProvider implements RegistrateProvider, RecipeOutput {
 
@@ -120,10 +114,9 @@ public class RegistrateRecipeProvider extends RecipeProvider implements Registra
     public static final int DEFAULT_SMOKE_TIME = DEFAULT_BLAST_TIME;
     public static final int DEFAULT_CAMPFIRE_TIME = DEFAULT_SMELT_TIME * 3;
 
-    private static final String SMELTING_NAME = "smelting";
     @SuppressWarnings("null")
     private static final ImmutableMap<RecipeSerializer<? extends AbstractCookingRecipe>, String> COOKING_TYPE_NAMES = ImmutableMap.<RecipeSerializer<? extends AbstractCookingRecipe>, String>builder()
-            .put(RecipeSerializer.SMELTING_RECIPE, SMELTING_NAME)
+            .put(RecipeSerializer.SMELTING_RECIPE, "smelting")
             .put(RecipeSerializer.BLASTING_RECIPE, "blasting")
             .put(RecipeSerializer.SMOKING_RECIPE, "smoking")
             .put(RecipeSerializer.CAMPFIRE_COOKING_RECIPE, "campfire")
@@ -134,8 +127,8 @@ public class RegistrateRecipeProvider extends RecipeProvider implements Registra
     }
 
     public <T extends ItemLike, S extends AbstractCookingRecipe> void cooking(DataIngredient source, RecipeCategory category, Supplier<? extends T> result, float experience, int cookingTime, String typeName, RecipeSerializer<S> serializer, AbstractCookingRecipe.Factory<S> factory) {
-        SimpleCookingRecipeBuilder.generic(source, category, result.get(), experience, cookingTime, serializer, factory)
-            .unlockedBy("has_" + safeName(source), source.getCritereon(this))
+        SimpleCookingRecipeBuilder.generic(source.toVanilla(), category, result.get(), experience, cookingTime, serializer, factory)
+            .unlockedBy("has_" + safeName(source), source.getCriterion(this))
             .save(this, safeId(result.get()) + "_from_" + safeName(source) + "_" + typeName);
     }
 
@@ -176,8 +169,8 @@ public class RegistrateRecipeProvider extends RecipeProvider implements Registra
     }
 
     public <T extends ItemLike> void stonecutting(DataIngredient source, RecipeCategory category, Supplier<? extends T> result, int resultAmount) {
-        SingleItemRecipeBuilder.stonecutting(source, category, result.get(), resultAmount)
-            .unlockedBy("has_" + safeName(source), source.getCritereon(this))
+        SingleItemRecipeBuilder.stonecutting(source.toVanilla(), category, result.get(), resultAmount)
+            .unlockedBy("has_" + safeName(source), source.getCriterion(this))
             .save(this, safeId(result.get()) + "_from_" + safeName(source) + "_stonecutting");
     }
 
@@ -194,13 +187,13 @@ public class RegistrateRecipeProvider extends RecipeProvider implements Registra
 
     public <T extends ItemLike> void square(DataIngredient source, RecipeCategory category, Supplier<? extends T> output, boolean small) {
         ShapedRecipeBuilder builder = ShapedRecipeBuilder.shaped(category, output.get())
-                .define('X', source);
+                .define('X', source.toVanilla());
         if (small) {
             builder.pattern("XX").pattern("XX");
         } else {
             builder.pattern("XXX").pattern("XXX").pattern("XXX");
         }
-        builder.unlockedBy("has_" + safeName(source), source.getCritereon(this))
+        builder.unlockedBy("has_" + safeName(source), source.getCriterion(this))
             .save(this, safeId(output.get()));
     }
 
@@ -222,17 +215,17 @@ public class RegistrateRecipeProvider extends RecipeProvider implements Registra
         storage(DataIngredient.items(source), category, source, DataIngredient.items(output), output);
     }
 
-    public <T extends ItemLike> void storage(DataIngredient sourceIngredient, RecipeCategory category, NonNullSupplier<? extends T> source, DataIngredient outputIngredient, NonNullSupplier<? extends T> output) {
-        square(sourceIngredient, category, output, false);
-        singleItemUnfinished(outputIngredient, category, source, 1, 9)
-            .save(this, safeId(sourceIngredient) + "_from_" + safeName(output.get()));
+    public <T extends ItemLike> void storage(DataIngredient sourceDataIngredient, RecipeCategory category, NonNullSupplier<? extends T> source, DataIngredient outputDataIngredient, NonNullSupplier<? extends T> output) {
+        square(sourceDataIngredient, category, output, false);
+        singleItemUnfinished(outputDataIngredient, category, source, 1, 9)
+            .save(this, safeId(sourceDataIngredient) + "_from_" + safeName(output.get()));
     }
 
     @CheckReturnValue
     public <T extends ItemLike> ShapelessRecipeBuilder singleItemUnfinished(DataIngredient source, RecipeCategory category, Supplier<? extends T> result, int required, int amount) {
         return ShapelessRecipeBuilder.shapeless(category, result.get(), amount)
-            .requires(source, required)
-            .unlockedBy("has_" + safeName(source), source.getCritereon(this));
+            .requires(source.toVanilla(), required)
+            .unlockedBy("has_" + safeName(source), source.getCriterion(this));
     }
 
     public <T extends ItemLike> void singleItem(DataIngredient source, RecipeCategory category, Supplier<? extends T> result, int required, int amount) {
@@ -248,9 +241,9 @@ public class RegistrateRecipeProvider extends RecipeProvider implements Registra
     public <T extends ItemLike> void stairs(DataIngredient source, RecipeCategory category, Supplier<? extends T> result, @Nullable String group, boolean stone) {
         ShapedRecipeBuilder.shaped(category, result.get(), 4)
             .pattern("X  ").pattern("XX ").pattern("XXX")
-            .define('X', source)
+            .define('X', source.toVanilla())
             .group(group)
-            .unlockedBy("has_" + safeName(source), source.getCritereon(this))
+            .unlockedBy("has_" + safeName(source), source.getCriterion(this))
             .save(this, safeId(result.get()));
         if (stone) {
             stonecutting(source, category, result);
@@ -260,9 +253,9 @@ public class RegistrateRecipeProvider extends RecipeProvider implements Registra
     public <T extends ItemLike> void slab(DataIngredient source, RecipeCategory category, Supplier<? extends T> result, @Nullable String group, boolean stone) {
         ShapedRecipeBuilder.shaped(category, result.get(), 6)
             .pattern("XXX")
-            .define('X', source)
+            .define('X', source.toVanilla())
             .group(group)
-            .unlockedBy("has_" + safeName(source), source.getCritereon(this))
+            .unlockedBy("has_" + safeName(source), source.getCriterion(this))
             .save(this, safeId(result.get()));
         if (stone) {
             stonecutting(source, category, result, 2);
@@ -272,28 +265,28 @@ public class RegistrateRecipeProvider extends RecipeProvider implements Registra
     public <T extends ItemLike> void fence(DataIngredient source, RecipeCategory category, Supplier<? extends T> result, @Nullable String group) {
         ShapedRecipeBuilder.shaped(category, result.get(), 3)
             .pattern("W#W").pattern("W#W")
-            .define('W', source)
+            .define('W', source.toVanilla())
             .define('#', Tags.Items.RODS_WOODEN)
             .group(group)
-            .unlockedBy("has_" + safeName(source), source.getCritereon(this))
+            .unlockedBy("has_" + safeName(source), source.getCriterion(this))
             .save(this, safeId(result.get()));
     }
 
     public <T extends ItemLike> void fenceGate(DataIngredient source, RecipeCategory category, Supplier<? extends T> result, @Nullable String group) {
         ShapedRecipeBuilder.shaped(category, result.get())
             .pattern("#W#").pattern("#W#")
-            .define('W', source)
+            .define('W', source.toVanilla())
             .define('#', Tags.Items.RODS_WOODEN)
             .group(group)
-            .unlockedBy("has_" + safeName(source), source.getCritereon(this))
+            .unlockedBy("has_" + safeName(source), source.getCriterion(this))
             .save(this, safeId(result.get()));
     }
 
     public <T extends ItemLike> void wall(DataIngredient source, RecipeCategory category, Supplier<? extends T> result) {
         ShapedRecipeBuilder.shaped(category, result.get(), 6)
             .pattern("XXX").pattern("XXX")
-            .define('X', source)
-            .unlockedBy("has_" + safeName(source), source.getCritereon(this))
+            .define('X', source.toVanilla())
+            .unlockedBy("has_" + safeName(source), source.getCriterion(this))
             .save(this, safeId(result.get()));
         stonecutting(source, category, result);
     }
@@ -301,18 +294,18 @@ public class RegistrateRecipeProvider extends RecipeProvider implements Registra
     public <T extends ItemLike> void door(DataIngredient source, RecipeCategory category, Supplier<? extends T> result, @Nullable String group) {
         ShapedRecipeBuilder.shaped(category, result.get(), 3)
             .pattern("XX").pattern("XX").pattern("XX")
-            .define('X', source)
+            .define('X', source.toVanilla())
             .group(group)
-            .unlockedBy("has_" + safeName(source), source.getCritereon(this))
+            .unlockedBy("has_" + safeName(source), source.getCriterion(this))
             .save(this, safeId(result.get()));
     }
 
     public <T extends ItemLike> void trapDoor(DataIngredient source, RecipeCategory category, Supplier<? extends T> result, @Nullable String group) {
         ShapedRecipeBuilder.shaped(category, result.get(), 2)
             .pattern("XXX").pattern("XXX")
-            .define('X', source)
+            .define('X', source.toVanilla())
             .group(group)
-            .unlockedBy("has_" + safeName(source), source.getCritereon(this))
+            .unlockedBy("has_" + safeName(source), source.getCriterion(this))
             .save(this, safeId(result.get()));
     }
 
@@ -322,12 +315,12 @@ public class RegistrateRecipeProvider extends RecipeProvider implements Registra
     /** Generated override to expose protected method: {@link RecipeProvider#buildAdvancement} */
     @Override
     @Generated(value = "com.tterrag.registrate.test.meta.UpdateRecipeProvider", date = "Sat, 23 Dec 2023 10:56:17 GMT")
-    public CompletableFuture<?> buildAdvancement(CachedOutput p_253674_, AdvancementHolder p_301116_) { return super.buildAdvancement(p_253674_, p_301116_); }
+    public CompletableFuture<?> buildAdvancement(CachedOutput p_253674_, HolderLookup.Provider p_323646_, AdvancementHolder p_301116_) { return super.buildAdvancement(p_253674_, p_323646_, p_301116_); }
 
     /** Generated override to expose protected method: {@link RecipeProvider#buildAdvancement} */
     @Override
     @Generated(value = "com.tterrag.registrate.test.meta.UpdateRecipeProvider", date = "Sat, 23 Dec 2023 10:56:17 GMT")
-    public CompletableFuture<?> buildAdvancement(CachedOutput p_253674_, AdvancementHolder p_301116_, net.neoforged.neoforge.common.conditions.ICondition... conditions) { return super.buildAdvancement(p_253674_, p_301116_, conditions); }
+    public CompletableFuture<?> buildAdvancement(CachedOutput p_253674_, HolderLookup.Provider p_323646_, AdvancementHolder p_301116_, net.neoforged.neoforge.common.conditions.ICondition... conditions) { return super.buildAdvancement(p_253674_, p_323646_, p_301116_, conditions); }
 
     /** Generated override to expose protected method: {@link RecipeProvider#generateForEnabledBlockFamilies} */
     @Override

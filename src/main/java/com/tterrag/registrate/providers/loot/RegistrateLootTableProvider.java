@@ -10,11 +10,15 @@ import com.tterrag.registrate.providers.RegistrateProvider;
 import com.tterrag.registrate.util.nullness.NonNullBiFunction;
 import com.tterrag.registrate.util.nullness.NonNullConsumer;
 
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.WritableRegistry;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.loot.LootTableProvider;
 import net.minecraft.data.loot.LootTableSubProvider;
 import net.minecraft.data.loot.packs.VanillaLootTableProvider;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.ValidationContext;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSet;
@@ -23,6 +27,7 @@ import net.neoforged.fml.LogicalSide;
 import net.neoforged.fml.util.ObfuscationReflectionHelper;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -60,11 +65,11 @@ public class RegistrateLootTableProvider extends LootTableProvider implements Re
     private final AbstractRegistrate<?> parent;
 
     private final Multimap<LootType<?>, Consumer<? super RegistrateLootTables>> specialLootActions = HashMultimap.create();
-    private final Multimap<LootContextParamSet, Consumer<BiConsumer<ResourceLocation, LootTable.Builder>>> lootActions = HashMultimap.create();
+    private final Multimap<LootContextParamSet, Consumer<BiConsumer<ResourceKey<LootTable>, LootTable.Builder>>> lootActions = HashMultimap.create();
     private final Set<RegistrateLootTables> currentLootCreators = new HashSet<>();
 
-    public RegistrateLootTableProvider(AbstractRegistrate<?> parent, PackOutput packOutput) {
-        super(packOutput, Set.of(), VanillaLootTableProvider.create(packOutput).getTables());
+    public RegistrateLootTableProvider(AbstractRegistrate<?> parent, PackOutput packOutput, CompletableFuture<HolderLookup.Provider> provider) {
+        super(packOutput, Set.of(), VanillaLootTableProvider.create(packOutput, provider).getTables(), provider);
         this.parent = parent;
     }
 
@@ -74,8 +79,8 @@ public class RegistrateLootTableProvider extends LootTableProvider implements Re
     }
 
     @Override
-    protected void validate(Map<ResourceLocation, LootTable> map, ValidationContext validationresults) {
-        currentLootCreators.forEach(c -> c.validate(map, validationresults));
+    protected void validate(WritableRegistry<LootTable> writableRegistry, ValidationContext validationContext, ProblemReporter.Collector problemreporter$collector) {
+        currentLootCreators.forEach(c -> c.validate(writableRegistry, validationContext));
     }
 
     @SuppressWarnings("unchecked")
@@ -83,7 +88,7 @@ public class RegistrateLootTableProvider extends LootTableProvider implements Re
         this.specialLootActions.put(type, (Consumer<RegistrateLootTables>) action);
     }
 
-    public void addLootAction(LootContextParamSet set, Consumer<BiConsumer<ResourceLocation, LootTable.Builder>> action) {
+    public void addLootAction(LootContextParamSet set, Consumer<BiConsumer<ResourceKey<LootTable>, LootTable.Builder>> action) {
         this.lootActions.put(set, action);
     }
 
@@ -106,7 +111,7 @@ public class RegistrateLootTableProvider extends LootTableProvider implements Re
             builder.add(new SubProviderEntry(getLootCreator(parent, type), type.getLootSet()));
         }
         for (LootContextParamSet set : SET_REGISTRY.values()) {
-            builder.add(new SubProviderEntry(() -> callback -> lootActions.get(set).forEach(a -> a.accept(callback)), set));
+            builder.add(new SubProviderEntry(() -> (provider, callback) -> lootActions.get(set).forEach(a -> a.accept(callback)), set));
         }
         return builder.build();
     }

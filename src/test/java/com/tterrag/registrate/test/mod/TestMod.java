@@ -51,7 +51,7 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.MobCategory;
-import net.minecraft.world.entity.SpawnPlacements;
+import net.minecraft.world.entity.SpawnPlacementTypes;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.animal.Pig;
 import net.minecraft.world.entity.player.Inventory;
@@ -66,9 +66,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.enchantment.Enchantment;
-import net.minecraft.world.item.enchantment.Enchantment.Rarity;
-import net.minecraft.world.item.enchantment.EnchantmentCategory;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.biome.FixedBiomeSource;
@@ -101,6 +100,7 @@ import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.data.DatapackBuiltinEntriesProvider;
+import net.neoforged.neoforge.event.entity.SpawnPlacementRegisterEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 import net.neoforged.neoforge.fluids.FluidType;
@@ -122,7 +122,7 @@ public class TestMod {
         }
 
         @Override
-        public InteractionResult use(BlockState state, Level worldIn, BlockPos pos, Player player, InteractionHand handIn, BlockHitResult hit) {
+        public InteractionResult useWithoutItem(BlockState state, Level worldIn, BlockPos pos, Player player, BlockHitResult hit) {
             if (!worldIn.isClientSide) {
                 player.openMenu(new MenuProvider() {
 
@@ -185,13 +185,8 @@ public class TestMod {
 
     private static class TestEnchantment extends Enchantment {
 
-        public TestEnchantment(Rarity rarityIn, EnchantmentCategory typeIn, EquipmentSlot... slots) {
-            super(rarityIn, typeIn, slots);
-        }
-
-        @Override
-        public int getMaxLevel() {
-            return 5;
+        public TestEnchantment(Enchantment.EnchantmentDefinition definition) {
+            super(definition);
         }
     }
 
@@ -208,7 +203,7 @@ public class TestMod {
     private final ItemEntry<Item> testitem = registrate.object("testitem")
             .item(Item::new)
                 .onRegister(item -> sawCallback.set(true))
-                .properties(p -> p.food(new FoodProperties.Builder().nutrition(1).saturationMod(0.2f).build()))
+                .properties(p -> p.food(new FoodProperties.Builder().nutrition(1).saturationModifier(0.2f).build()))
                 .color(() -> () -> (stack, index) -> 0xFF0000FF)
                 .tag(ItemTags.BEDS)
                 .model((ctx, prov) -> prov.withExistingParent(ctx.getName(), new ResourceLocation("block/stone")))
@@ -265,7 +260,7 @@ public class TestMod {
             .entity(TestEntity::new, MobCategory.CREATURE)
             .attributes(Pig::createAttributes)
             .renderer(() -> PigRenderer::new)
-            .spawnPlacement(SpawnPlacements.Type.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Animal::checkAnimalSpawnRules)
+            .spawnPlacement(SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Animal::checkAnimalSpawnRules, SpawnPlacementRegisterEvent.Operation.OR)
             .defaultSpawnEgg(0xFF0000, 0x00FF00)
             .loot((prov, type) -> prov.add(type, LootTable.lootTable()
                     .withPool(LootPool.lootPool()
@@ -311,9 +306,9 @@ public class TestMod {
             .register();
 
     private final RegistryEntry<Enchantment,TestEnchantment> testenchantment = registrate.object("testenchantment")
-            .enchantment(EnchantmentCategory.ARMOR, TestEnchantment::new)
-            .rarity(Rarity.UNCOMMON)
-            .addArmorSlots()
+            .enchantment(Enchantment.definition(ItemTags.ARMOR_ENCHANTABLE, 1, 5, Enchantment.constantCost(1), Enchantment.constantCost(1), 1,
+                            EquipmentSlot.FEET, EquipmentSlot.LEGS, EquipmentSlot.CHEST, EquipmentSlot.HEAD),
+                    TestEnchantment::new)
             .register();
 
 //    private final RegistryEntry<TestBiome> testbiome = registrate.object("testbiome")

@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.loot.EntityLootSubProvider;
 import net.minecraft.data.loot.packs.VanillaEntityLoot;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.FrogVariant;
@@ -50,7 +51,7 @@ public class RegistrateEntityLootTables extends VanillaEntityLoot implements Reg
     /** Generated override to expose protected method: {@link EntityLootSubProvider#killedByFrogVariant} */
     @Override
     @Generated(value = "com.tterrag.registrate.test.meta.UpdateEntityLootTables", date = "Fri, 9 Jun 2023 03:55:24 GMT")
-    public LootItemCondition.Builder killedByFrogVariant(FrogVariant p_249403_) { return super.killedByFrogVariant(p_249403_); }
+    public LootItemCondition.Builder killedByFrogVariant(ResourceKey<FrogVariant> p_249403_) { return super.killedByFrogVariant(p_249403_); }
 
     /** Generated override to expose protected method: {@link EntityLootSubProvider#add} */
     @Override
@@ -60,7 +61,7 @@ public class RegistrateEntityLootTables extends VanillaEntityLoot implements Reg
     /** Generated override to expose protected method: {@link EntityLootSubProvider#add} */
     @Override
     @Generated(value = "com.tterrag.registrate.test.meta.UpdateEntityLootTables", date = "Fri, 9 Jun 2023 03:55:24 GMT")
-    public void add(EntityType<?> p_252130_, ResourceLocation p_251706_, LootTable.Builder p_249357_) { super.add(p_252130_, p_251706_, p_249357_); }
+    public void add(EntityType<?> p_252130_, ResourceKey<LootTable> p_251706_, LootTable.Builder p_249357_) { super.add(p_252130_, p_251706_, p_249357_); }
 
     // GENERATED END
 }

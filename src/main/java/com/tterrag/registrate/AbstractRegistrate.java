@@ -99,7 +99,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantment;
-import net.minecraft.world.item.enchantment.EnchantmentCategory;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -166,10 +165,10 @@ public abstract class AbstractRegistrate<S extends AbstractRegistrate<S>> {
     /**
      * Checks if Minecraft is running from a dev environment. Enables certain debug logging.
      * 
-     * @return {@code true} when in a dev environment (specifically, {@link FMLEnvironment#naming} == "mcp")
+     * @return {@code true} when in a dev environment (specifically, {@link FMLEnvironment.production} == false)
      */
     public static boolean isDevEnvironment() {
-        return FMLEnvironment.naming.equals("mcp");
+        return !FMLEnvironment.production;
     }
 
     private final Table<ResourceKey<? extends Registry<?>>, String, Registration<?, ?>> registrations = HashBasedTable.create();
@@ -1258,20 +1257,20 @@ public abstract class AbstractRegistrate<S extends AbstractRegistrate<S>> {
 
     // Enchantment
 
-    public <T extends Enchantment> EnchantmentBuilder<T, S> enchantment(EnchantmentCategory type, EnchantmentFactory<T> factory) {
-        return enchantment(self(), type, factory);
+    public <T extends Enchantment> EnchantmentBuilder<T, S> enchantment(Enchantment.EnchantmentDefinition definition, EnchantmentFactory<T> factory) {
+        return enchantment(self(), definition, factory);
     }
 
-    public <T extends Enchantment> EnchantmentBuilder<T, S> enchantment(String name, EnchantmentCategory type, EnchantmentFactory<T> factory) {
-        return enchantment(self(), name, type, factory);
+    public <T extends Enchantment> EnchantmentBuilder<T, S> enchantment(String name, Enchantment.EnchantmentDefinition definition, EnchantmentFactory<T> factory) {
+        return enchantment(self(), name, definition, factory);
     }
 
-    public <T extends Enchantment, P> EnchantmentBuilder<T, P> enchantment(P parent, EnchantmentCategory type, EnchantmentFactory<T> factory) {
-        return enchantment(parent, currentName(), type, factory);
+    public <T extends Enchantment, P> EnchantmentBuilder<T, P> enchantment(P parent, Enchantment.EnchantmentDefinition definition, EnchantmentFactory<T> factory) {
+        return enchantment(parent, currentName(), definition, factory);
     }
 
-    public <T extends Enchantment, P> EnchantmentBuilder<T, P> enchantment(P parent, String name, EnchantmentCategory type, EnchantmentFactory<T> factory) {
-        return entry(name, callback -> EnchantmentBuilder.create(this, parent, name, callback, type, factory));
+    public <T extends Enchantment, P> EnchantmentBuilder<T, P> enchantment(P parent, String name, Enchantment.EnchantmentDefinition definition, EnchantmentFactory<T> factory) {
+        return entry(name, callback -> EnchantmentBuilder.create(this, parent, name, callback, definition, factory));
     }
 
     // Creative Tab

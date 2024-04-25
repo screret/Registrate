@@ -18,10 +18,7 @@ import net.neoforged.fml.LogicalSide;
 
 import javax.annotation.Nullable;
 import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
@@ -76,18 +73,20 @@ public class RegistrateAdvancementProvider implements RegistrateProvider, Consum
 
     @Override
     public void accept(@Nullable AdvancementHolder holder) {
-        CachedOutput cache = this.cache;
-        if (cache == null) {
-            throw new IllegalStateException("Cannot accept advancements outside of act");
-        }
-        Objects.requireNonNull(holder, "Cannot accept a null advancement");
-        Path path = this.packOutput.getOutputFolder();
-        if (!seenAdvancements.add(holder.id())) {
-            throw new IllegalStateException("Duplicate advancement " + holder.id());
-        } else {
-            Path path1 = getPath(path, holder);
-            advancementsToSave.add(DataProvider.saveStable(cache,Advancement.CODEC, holder.value() , path1));
-        }
+        this.registriesLookup.thenAccept((lookup) -> {
+            CachedOutput cache = this.cache;
+            if (cache == null) {
+                throw new IllegalStateException("Cannot accept advancements outside of act");
+            }
+            Objects.requireNonNull(holder, "Cannot accept a null advancement");
+            Path path = this.packOutput.getOutputFolder();
+            if (!seenAdvancements.add(holder.id())) {
+                throw new IllegalStateException("Duplicate advancement " + holder.id());
+            } else {
+                Path path1 = getPath(path, holder);
+                advancementsToSave.add(DataProvider.saveStable(cache, lookup, Advancement.CODEC, holder.value(), path1));
+            }
+        });
     }
 
     private static Path getPath(Path pathIn, AdvancementHolder advancementIn) {

@@ -1,7 +1,6 @@
 package com.tterrag.registrate.builders;
 
 import java.util.Arrays;
-import java.util.EnumSet;
 
 import com.tterrag.registrate.AbstractRegistrate;
 import com.tterrag.registrate.providers.RegistrateLangProvider;
@@ -11,10 +10,9 @@ import com.tterrag.registrate.util.nullness.NonnullType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.enchantment.Enchantment;
-import net.minecraft.world.item.enchantment.EnchantmentCategory;
 
 /**
- * A builder for enchantments, allows for customization of the {@link Enchantment.Rarity enchantment rarity} and {@link EquipmentSlot equipment slots}, and configuration of data associated with
+ * A builder for enchantments, allows for customization of the {@link EquipmentSlot equipment slots}, and configuration of data associated with
  * enchantments (lang).
  * 
  * @param <T>
@@ -27,7 +25,7 @@ public class EnchantmentBuilder<T extends Enchantment, P> extends AbstractBuilde
     @FunctionalInterface
     public interface EnchantmentFactory<T extends Enchantment> {
         
-        T create(Enchantment.Rarity rarity, EnchantmentCategory type, EquipmentSlot... slots);
+        T create(Enchantment.EnchantmentDefinition definition);
     }
 
     /**
@@ -50,61 +48,20 @@ public class EnchantmentBuilder<T extends Enchantment, P> extends AbstractBuilde
      *            Name of the entry being built
      * @param callback
      *            A callback used to actually register the built entry
-     * @param type
-     *            The {@link EnchantmentCategory type} of the enchantment
-     * @param factory
-     *            Factory to create the enchantment
      * @return A new {@link EnchantmentBuilder} with reasonable default data generators.
      */
-    public static <T extends Enchantment, P> EnchantmentBuilder<T, P> create(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, EnchantmentCategory type, EnchantmentFactory<T> factory) {
-        return new EnchantmentBuilder<>(owner, parent, name, callback, type, factory)
+    public static <T extends Enchantment, P> EnchantmentBuilder<T, P> create(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, Enchantment.EnchantmentDefinition definition, EnchantmentFactory<T> factory) {
+        return new EnchantmentBuilder<>(owner, parent, name, callback, definition, factory)
                 .defaultLang();
     }
 
-    private Enchantment.Rarity rarity = Enchantment.Rarity.COMMON;
-    private final EnchantmentCategory type;
-    @SuppressWarnings("null")
-    private EnumSet<EquipmentSlot> slots = EnumSet.noneOf(EquipmentSlot.class);
-
+    private final Enchantment.EnchantmentDefinition definition;
     private final EnchantmentFactory<T> factory;
 
-    protected EnchantmentBuilder(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, EnchantmentCategory type, EnchantmentFactory<T> factory) {
+    protected EnchantmentBuilder(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, Enchantment.EnchantmentDefinition definition, EnchantmentFactory<T> factory) {
         super(owner, parent, name, callback, Registries.ENCHANTMENT);
         this.factory = factory;
-        this.type = type;
-    }
-
-    /**
-     * Set the rarity of this enchantment. Defaults to {@link Enchantment.Rarity#COMMON}.
-     * 
-     * @param rarity
-     *            The rarity to assign
-     * @return this {@link EnchantmentBuilder}
-     */
-    public EnchantmentBuilder<T, P> rarity(Enchantment.Rarity rarity) {
-        this.rarity = rarity;
-        return this;
-    }
-
-    /**
-     * Add the armor {@link EquipmentSlot slots} as valid slots for this enchantment, i.e. {@code HEAD}, {@code CHEST}, {@code LEGS}, and {@code FEET}.
-     * 
-     * @return this {@link EnchantmentBuilder}
-     */
-    public EnchantmentBuilder<T, P> addArmorSlots() {
-        return addSlots(EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET);
-    }
-
-    /**
-     * Add valid slots for this enchantment. Defaults to none. Subsequent calls are additive.
-     * 
-     * @param slots
-     *            The slots to add
-     * @return this {@link EnchantmentBuilder}
-     */
-    public EnchantmentBuilder<T, P> addSlots(EquipmentSlot... slots) {
-        this.slots.addAll(Arrays.asList(slots));
-        return this;
+        this.definition = definition;
     }
 
     /**
@@ -130,6 +87,6 @@ public class EnchantmentBuilder<T extends Enchantment, P> extends AbstractBuilde
 
     @Override
     protected @NonnullType T createEntry() {
-        return factory.create(rarity, type, slots.toArray(new EquipmentSlot[0]));
+        return factory.create(definition);
     }
 }

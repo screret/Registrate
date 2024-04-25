@@ -12,7 +12,7 @@ plugins {
     id 'com.matthewprenger.cursegradle' version '1.4.0'
     id 'org.ajoberstar.grgit' version '4.1.0'
 //    id "com.palantir.revapi" version "1.7.0"
-    id 'net.neoforged.gradle.userdev' version '7.0.57'
+    id 'net.neoforged.gradle.userdev' version '7.0.105'
 }
 
 apply plugin: 'maven-publish'
@@ -34,7 +34,7 @@ version = "MC${minecraft_version}-${getVersion()}"
 group = "com.tterrag.registrate"
 archivesBaseName = "Registrate"
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 /*
 revapi {
     oldGroup = project.group
@@ -86,7 +86,7 @@ dependencies {
 }
 
 lombok {
-    version = "1.18.20"
+    version = "1.18.30"
 //    config['lombok.addJavaxGeneratedAnnotation'] = 'true'
 }
 
