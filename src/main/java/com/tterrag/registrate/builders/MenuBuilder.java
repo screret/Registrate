@@ -3,6 +3,7 @@ package com.tterrag.registrate.builders;
 import javax.annotation.Nullable;
 
 import com.tterrag.registrate.AbstractRegistrate;
+import com.tterrag.registrate.util.OneTimeEventReceiver;
 import com.tterrag.registrate.util.entry.MenuEntry;
 import com.tterrag.registrate.util.entry.RegistryEntry;
 import com.tterrag.registrate.util.nullness.NonNullSupplier;
@@ -19,6 +20,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.loading.FMLEnvironment;
+import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
@@ -59,7 +61,9 @@ public class MenuBuilder<T extends AbstractContainerMenu, S extends Screen & Men
         MenuType<T> ret = IMenuTypeExtension.create((windowId, inv, buf) -> factory.create(supplier.get(), windowId, inv, buf));
         if(FMLEnvironment.dist == Dist.CLIENT){
             ScreenFactory<T, S> screenFactory = this.screenFactory.get();
-            MenuScreens.<T, S>register(ret, (type, inv, displayName) -> screenFactory.create(type, inv, displayName));
+            OneTimeEventReceiver.addModListener(this.getOwner(), RegisterMenuScreensEvent.class, event -> {
+                event.register(ret, screenFactory::create);
+            });
         }
         return ret;
     }

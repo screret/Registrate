@@ -407,13 +407,13 @@ public class FluidBuilder<TSource extends BaseFlowingFluid, TFlowing extends Bas
      *            A factory for the block, which accepts the block object and properties and returns a new block
      * @return the {@link BlockBuilder} for the {@link LiquidBlock}
      */
-    public <B extends LiquidBlock> BlockBuilder<B, FluidBuilder<TSource, TFlowing, P>> block(NonNullBiFunction<NonNullSupplier<? extends TSource>, BlockBehaviour.Properties, ? extends B> factory) {
+    public <B extends LiquidBlock> BlockBuilder<B, FluidBuilder<TSource, TFlowing, P>> block(NonNullBiFunction<TSource, BlockBehaviour.Properties, ? extends B> factory) {
         if (this.defaultBlock == Boolean.FALSE) {
             throw new IllegalStateException("Only one call to block/noBlock per builder allowed");
         }
         this.defaultBlock = false;
         NonNullSupplier<TSource> supplier = asSupplier();
-        return getOwner().<B, FluidBuilder<TSource, TFlowing, P>>block(this, getName(), p -> factory.apply(supplier, p))
+        return getOwner().<B, FluidBuilder<TSource, TFlowing, P>>block(this, getName(), p -> factory.apply(supplier.get(), p))
                 .properties(p -> BlockBehaviour.Properties.ofFullCopy(Blocks.WATER).noLootTable())
                 .properties(p -> p.lightLevel(blockState -> fluidType.get().getLightLevel()))
                 .blockstate((ctx, prov) -> prov.simpleBlock(ctx.getEntry(), prov.models().getBuilder(getName())
@@ -466,13 +466,13 @@ public class FluidBuilder<TSource extends BaseFlowingFluid, TFlowing extends Bas
      *            A factory for the bucket item, which accepts the fluid object supplier and properties and returns a new item
      * @return the {@link ItemBuilder} for the {@link BucketItem}
      */
-    public <I extends BucketItem> ItemBuilder<I, FluidBuilder<TSource, TFlowing, P>> bucket(NonNullBiFunction<Supplier<? extends BaseFlowingFluid>, Item.Properties, ? extends I> factory) {
+    public <I extends BucketItem> ItemBuilder<I, FluidBuilder<TSource, TFlowing, P>> bucket(NonNullBiFunction<BaseFlowingFluid, Item.Properties, ? extends I> factory) {
         if (this.defaultBucket == Boolean.FALSE) {
             throw new IllegalStateException("Only one call to bucket/noBucket per builder allowed");
         }
         this.defaultBucket = false;
 
-        return getOwner().<I, FluidBuilder<TSource, TFlowing, P>>item(this, bucketName, p -> factory.apply(() -> get().get(), p))
+        return getOwner().<I, FluidBuilder<TSource, TFlowing, P>>item(this, bucketName, p -> factory.apply(get().get(), p))
                 .properties(p -> p.craftRemainder(Items.BUCKET).stacksTo(1))
                 .model((ctx, prov) -> prov.generated(ctx::getEntry, new ResourceLocation(getOwner().getModid(), "item/" + bucketName)));
     }
