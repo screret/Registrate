@@ -9,6 +9,8 @@ import javax.annotation.Generated;
 import com.tterrag.registrate.AbstractRegistrate;
 
 import lombok.RequiredArgsConstructor;
+import net.minecraft.core.HolderGetter;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.loot.EntityLootSubProvider;
 import net.minecraft.data.loot.packs.VanillaEntityLoot;
@@ -20,11 +22,16 @@ import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 
-@RequiredArgsConstructor
 public class RegistrateEntityLootTables extends VanillaEntityLoot implements RegistrateLootTables {
 
     private final AbstractRegistrate<?> parent;
     private final Consumer<RegistrateEntityLootTables> callback;
+
+    public RegistrateEntityLootTables(HolderLookup.Provider p_346214_, AbstractRegistrate<?> parent, Consumer<RegistrateEntityLootTables> callback) {
+        super(p_346214_);
+        this.parent = parent;
+        this.callback = callback;
+    }
 
     @Override
     public void generate() {
@@ -64,4 +71,8 @@ public class RegistrateEntityLootTables extends VanillaEntityLoot implements Reg
     public void add(EntityType<?> p_252130_, ResourceKey<LootTable> p_251706_, LootTable.Builder p_249357_) { super.add(p_252130_, p_251706_, p_249357_); }
 
     // GENERATED END
+
+    public HolderLookup.Provider getRegistries() {
+        return this.registries;
+    }
 }

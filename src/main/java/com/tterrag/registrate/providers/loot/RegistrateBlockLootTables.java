@@ -3,6 +3,7 @@ package com.tterrag.registrate.providers.loot;
 import com.tterrag.registrate.AbstractRegistrate;
 import lombok.RequiredArgsConstructor;
 
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.loot.BlockLootSubProvider;
 import net.minecraft.data.loot.packs.VanillaBlockLoot;
@@ -22,10 +23,15 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Generated;
 
-@RequiredArgsConstructor
 public class RegistrateBlockLootTables extends VanillaBlockLoot implements RegistrateLootTables {
     private final AbstractRegistrate<?> parent;
     private final Consumer<RegistrateBlockLootTables> callback;
+
+    public RegistrateBlockLootTables(HolderLookup.Provider provider, AbstractRegistrate<?> parent, Consumer<RegistrateBlockLootTables> callback) {
+        super(provider);
+        this.parent = parent;
+        this.callback = callback;
+    }
 
     @Override
     protected void generate() {
@@ -56,15 +62,15 @@ public class RegistrateBlockLootTables extends VanillaBlockLoot implements Regis
 
     /** Generated override to expose protected method: {@link BlockLootSubProvider#createSilkTouchDispatchTable} */
     @Generated(value = "com.tterrag.registrate.test.meta.UpdateBlockLootTables", date = "Fri, 9 Jun 2023 03:54:51 GMT")
-    public static LootTable.Builder createSilkTouchDispatchTable(Block p_250203_, LootPoolEntryContainer.Builder<?> p_252089_) { return BlockLootSubProvider.createSilkTouchDispatchTable(p_250203_, p_252089_); }
+    public LootTable.Builder createSilkTouchDispatchTable(Block p_250203_, LootPoolEntryContainer.Builder<?> p_252089_) { return super.createSilkTouchDispatchTable(p_250203_, p_252089_); }
 
     /** Generated override to expose protected method: {@link BlockLootSubProvider#createShearsDispatchTable} */
     @Generated(value = "com.tterrag.registrate.test.meta.UpdateBlockLootTables", date = "Fri, 9 Jun 2023 03:54:51 GMT")
-    public static LootTable.Builder createShearsDispatchTable(Block p_252195_, LootPoolEntryContainer.Builder<?> p_250102_) { return BlockLootSubProvider.createShearsDispatchTable(p_252195_, p_250102_); }
+    public LootTable.Builder createShearsDispatchTable(Block p_252195_, LootPoolEntryContainer.Builder<?> p_250102_) { return super.createShearsDispatchTable(p_252195_, p_250102_); }
 
     /** Generated override to expose protected method: {@link BlockLootSubProvider#createSilkTouchOrShearsDispatchTable} */
     @Generated(value = "com.tterrag.registrate.test.meta.UpdateBlockLootTables", date = "Fri, 9 Jun 2023 03:54:51 GMT")
-    public static LootTable.Builder createSilkTouchOrShearsDispatchTable(Block p_250539_, LootPoolEntryContainer.Builder<?> p_251459_) { return BlockLootSubProvider.createSilkTouchOrShearsDispatchTable(p_250539_, p_251459_); }
+    public LootTable.Builder createSilkTouchOrShearsDispatchTable(Block p_250539_, LootPoolEntryContainer.Builder<?> p_251459_) { return super.createSilkTouchOrShearsDispatchTable(p_250539_, p_251459_); }
 
     /** Generated override to expose protected method: {@link BlockLootSubProvider#createSingleItemTableWithSilkTouch} */
     @Override
@@ -83,7 +89,7 @@ public class RegistrateBlockLootTables extends VanillaBlockLoot implements Regis
 
     /** Generated override to expose protected method: {@link BlockLootSubProvider#createSilkTouchOnlyTable} */
     @Generated(value = "com.tterrag.registrate.test.meta.UpdateBlockLootTables", date = "Fri, 9 Jun 2023 03:54:51 GMT")
-    public static LootTable.Builder createSilkTouchOnlyTable(ItemLike p_252216_) { return BlockLootSubProvider.createSilkTouchOnlyTable(p_252216_); }
+    public LootTable.Builder createSilkTouchOnlyTable(ItemLike p_252216_) { return super.createSilkTouchOnlyTable(p_252216_); }
 
     /** Generated override to expose protected method: {@link BlockLootSubProvider#createPotFlowerItemTable} */
     @Override
@@ -127,15 +133,15 @@ public class RegistrateBlockLootTables extends VanillaBlockLoot implements Regis
 
     /** Generated override to expose protected method: {@link BlockLootSubProvider#createBeeNestDrop} */
     @Generated(value = "com.tterrag.registrate.test.meta.UpdateBlockLootTables", date = "Fri, 9 Jun 2023 03:54:51 GMT")
-    public static LootTable.Builder createBeeNestDrop(Block p_250988_) { return BlockLootSubProvider.createBeeNestDrop(p_250988_); }
+    public LootTable.Builder createBeeNestDrop(Block p_250988_) { return super.createBeeNestDrop(p_250988_); }
 
     /** Generated override to expose protected method: {@link BlockLootSubProvider#createBeeHiveDrop} */
     @Generated(value = "com.tterrag.registrate.test.meta.UpdateBlockLootTables", date = "Fri, 9 Jun 2023 03:54:51 GMT")
-    public static LootTable.Builder createBeeHiveDrop(Block p_248770_) { return BlockLootSubProvider.createBeeHiveDrop(p_248770_); }
+    public LootTable.Builder createBeeHiveDrop(Block p_248770_) { return super.createBeeHiveDrop(p_248770_); }
 
     /** Generated override to expose protected method: {@link BlockLootSubProvider#createCaveVinesDrop} */
     @Generated(value = "com.tterrag.registrate.test.meta.UpdateBlockLootTables", date = "Fri, 9 Jun 2023 03:54:51 GMT")
-    public static LootTable.Builder createCaveVinesDrop(Block p_251070_) { return BlockLootSubProvider.createCaveVinesDrop(p_251070_); }
+    public LootTable.Builder createCaveVinesDrop(Block p_251070_) { return super.createCaveVinesDrop(p_251070_); }
 
     /** Generated override to expose protected method: {@link BlockLootSubProvider#createOreDrop} */
     @Override
@@ -183,7 +189,7 @@ public class RegistrateBlockLootTables extends VanillaBlockLoot implements Regis
 
     /** Generated override to expose protected method: {@link BlockLootSubProvider#createDoublePlantShearsDrop} */
     @Generated(value = "com.tterrag.registrate.test.meta.UpdateBlockLootTables", date = "Fri, 9 Jun 2023 03:54:51 GMT")
-    public static LootTable.Builder createDoublePlantShearsDrop(Block p_248678_) { return BlockLootSubProvider.createDoublePlantShearsDrop(p_248678_); }
+    public LootTable.Builder createDoublePlantShearsDrop(Block p_248678_) { return super.createDoublePlantShearsDrop(p_248678_); }
 
     /** Generated override to expose protected method: {@link BlockLootSubProvider#createDoublePlantWithSeedDrops} */
     @Override
@@ -245,4 +251,8 @@ public class RegistrateBlockLootTables extends VanillaBlockLoot implements Regis
     public void add(Block p_250610_, LootTable.Builder p_249817_) { super.add(p_250610_, p_249817_); }
 
     // GENERATED END
+
+    public HolderLookup.Provider getRegistries() {
+        return this.registries;
+    }
 }

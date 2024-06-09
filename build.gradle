@@ -5,6 +5,7 @@ buildscript {
             name = "sonatype"
             url = "https://oss.sonatype.org/content/repositories/snapshots/"
         }
+        maven { url = 'https://maven.neoforged.net/releases' }
     }
 }
 plugins {
@@ -12,7 +13,7 @@ plugins {
     id 'com.matthewprenger.cursegradle' version '1.4.0'
     id 'org.ajoberstar.grgit' version '4.1.0'
 //    id "com.palantir.revapi" version "1.7.0"
-    id 'net.neoforged.gradle.userdev' version '7.0.105'
+    id 'net.neoforged.gradle.userdev' version '7.0.142'
 }
 
 apply plugin: 'maven-publish'
@@ -49,13 +50,21 @@ runs {
         systemProperty 'forge.logging.markers', 'REGISTRIES,REGISTRYDUMP'
         systemProperty 'forge.logging.console.level', 'debug'
 
-        modSource project.sourceSets.test
-        modSource project.sourceSets.main
+        modSources {
+            add project.sourceSets.test
+            add project.sourceSets.main
+        }
 
     }
 
     client {
 //        taskName 'testmod_client'
+
+
+        modSources {
+            add project.sourceSets.test
+            add project.sourceSets.main
+        }
     }
     server {
 //        taskName 'testmod_server'
@@ -74,6 +83,14 @@ repositories {
     maven {
         name = 'tterrag'
         url = 'https://maven.tterrag.com/'
+    }
+    maven {
+        name 'Maven for PR #1076' // https://github.com/neoforged/NeoForge/pull/1076
+        url 'https://prmaven.neoforged.net/NeoForge/pr1076'
+        content {
+            includeModule('net.neoforged', 'testframework')
+            includeModule('net.neoforged', 'neoforge')
+        }
     }
 }
 

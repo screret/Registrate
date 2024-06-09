@@ -98,7 +98,7 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
             setData(type, (ctx, prov) -> tagsByType.get(type).stream()
                     .map(t -> (TagKey<R>) t)
                     .map(prov::addTag)
-                    .forEach(b -> b.add(TagEntry.element(new ResourceLocation(getOwner().getModid(), getName())))));
+                    .forEach(b -> b.add(TagEntry.element(ResourceLocation.fromNamespaceAndPath(getOwner().getModid(), getName())))));
         }
         tagsByType.putAll(type, Arrays.asList(tags));
         return (S) this;

@@ -474,7 +474,7 @@ public class FluidBuilder<TSource extends BaseFlowingFluid, TFlowing extends Bas
 
         return getOwner().<I, FluidBuilder<TSource, TFlowing, P>>item(this, bucketName, p -> factory.apply(get().get(), p))
                 .properties(p -> p.craftRemainder(Items.BUCKET).stacksTo(1))
-                .model((ctx, prov) -> prov.generated(ctx::getEntry, new ResourceLocation(getOwner().getModid(), "item/" + bucketName)));
+                .model((ctx, prov) -> prov.generated(ctx::getEntry, ResourceLocation.fromNamespaceAndPath(getOwner().getModid(), "item/" + bucketName)));
     }
 
     @Beta
@@ -540,7 +540,7 @@ public class FluidBuilder<TSource extends BaseFlowingFluid, TFlowing extends Bas
             properties.descriptionId(block.get().get().getDescriptionId());
             setData(ProviderType.LANG, NonNullBiConsumer.noop());
         } else {
-            properties.descriptionId(Util.makeDescriptionId("fluid", new ResourceLocation(getOwner().getModid(), getName())));
+            properties.descriptionId(Util.makeDescriptionId("fluid", ResourceLocation.fromNamespaceAndPath(getOwner().getModid(), getName())));
         }
 
         return properties;

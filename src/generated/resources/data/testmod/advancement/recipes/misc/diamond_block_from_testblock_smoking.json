@@ -5,9 +5,7 @@
       "conditions": {
         "items": [
           {
-            "items": [
-              "testmod:testblock"
-            ]
+            "items": "testmod:testblock"
           }
         ]
       },
@@ -15,21 +13,20 @@
     },
     "has_the_recipe": {
       "conditions": {
-        "recipe": "testmod:diamond_block_from_testblock_smelting"
+        "recipe": "testmod:diamond_block_from_testblock_smoking"
       },
       "trigger": "minecraft:recipe_unlocked"
     }
   },
   "requirements": [
     [
-      "has_testblock",
-      "has_the_recipe"
+      "has_the_recipe",
+      "has_testblock"
     ]
   ],
   "rewards": {
     "recipes": [
-      "testmod:diamond_block_from_testblock_smelting"
+      "testmod:diamond_block_from_testblock_smoking"
     ]
-  },
-  "sends_telemetry_event": false
+  }
 }

@@ -44,11 +44,11 @@ public class RegistrateAdvancementProvider implements RegistrateProvider, Consum
     }
 
     public MutableComponent title(String category, String name, String title) {
-        return owner.addLang("advancements", new ResourceLocation(category, name), "title", title);
+        return owner.addLang("advancements", ResourceLocation.fromNamespaceAndPath(category, name), "title", title);
     }
 
     public MutableComponent desc(String category, String name, String desc) {
-        return owner.addLang("advancements", new ResourceLocation(category, name), "description", desc);
+        return owner.addLang("advancements", ResourceLocation.fromNamespaceAndPath(category, name), "description", desc);
     }
 
     private @Nullable CachedOutput cache;
